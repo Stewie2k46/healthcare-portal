@@ -1,0 +1,37 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "us-east-1"  # Specify your AWS region
+    ECR_REPOSITORY_URI: "your-account-id.dkr.ecr.us-east-1.amazonaws.com/healthcare-portal"
+    DOCKER_IMAGE_TAG: "latest"
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
+      - echo Starting Docker build...
+
+  build:
+    commands:
+      - echo Building the Docker image...
+      - docker build -t healthcare-portal .
+      - echo Tagging the Docker image...
+      - docker tag healthcare-portal:latest $ECR_REPOSITORY_URI:$DOCKER_IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Pushing the Docker image to ECR...
+      - docker push $ECR_REPOSITORY_URI:$DOCKER_IMAGE_TAG
+      - echo Updating Kubernetes deployment...
+      - kubectl set image deployment/healthcare-portal healthcare-portal=$ECR_REPOSITORY_URI:$DOCKER_IMAGE_TAG
+
+artifacts:
+  files:
+    - deployment.yaml
+  discard-paths: yes
+
+cache:
+  paths:
+    - '/root/.cache/pip'
