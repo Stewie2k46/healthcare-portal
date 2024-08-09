@@ -1,6 +1,11 @@
-from flask import request, jsonify
+from flask import request, jsonify, url_for
 from app import app, db
 from app.models import Patient, Doctor
+import urllib.parse
+
+@app.route('/')
+def index():
+    return "Welcome to the Healthcare Portal"
 
 @app.route('/patients', methods=['POST'])
 def create_patient():
@@ -36,7 +41,7 @@ def register_doctor():
     data = request.get_json()
     new_doctor = Doctor(
         username=data['username'],
-        password=data['password']  # Note: Store passwords securely using hashing
+        password=data['password']  # Note: Store passwords securely using hashing in production
     )
     db.session.add(new_doctor)
     db.session.commit()
@@ -50,3 +55,18 @@ def login_doctor():
         return jsonify({"message": "Login successful"}), 200
     else:
         return jsonify({"message": "Invalid credentials"}), 401
+
+@app.route('/routes')
+def list_routes():
+    output = []
+    for rule in app.url_map.iter_rules():
+        options = {}
+        for arg in rule.arguments:
+            options[arg] = "[{0}]".format(arg)
+
+        methods = ','.join(rule.methods)
+        url = url_for(rule.endpoint, **options)
+        line = urllib.parse.unquote(f"{rule.endpoint}: {methods} {url}")
+        output.append(line)
+
+    return "<br>".join(output)

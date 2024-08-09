@@ -1,7 +1,8 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
+import urllib.parse
 
 app = Flask(__name__)
 
@@ -30,6 +31,10 @@ class Doctor(db.Model):
     password = db.Column(db.String(100), nullable=False)
 
 # Routes
+@app.route('/')
+def index():
+    return "Welcome to the Healthcare Portal"
+
 @app.route('/patients', methods=['POST'])
 def create_patient():
     data = request.get_json()
@@ -79,6 +84,21 @@ def login_doctor():
     else:
         return jsonify({"message": "Invalid credentials"}), 401
 
+@app.route('/routes')
+def list_routes():
+    output = []
+    for rule in app.url_map.iter_rules():
+        options = {}
+        for arg in rule.arguments:
+            options[arg] = "[{0}]".format(arg)
+
+        methods = ','.join(rule.methods)
+        url = url_for(rule.endpoint, **options)
+        line = urllib.parse.unquote(f"{rule.endpoint}: {methods} {url}")
+        output.append(line)
+
+    return "<br>".join(output)
+
 # Main
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
