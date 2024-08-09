@@ -14,12 +14,12 @@ spec:
     spec:
       containers:
         - name: healthcare-portal
-          image: your-dockerhub-username/healthcare-portal:latest
+          image: stewiedocker46/healthcare:latest  # Update with the image built and tagged locally
           ports:
             - containerPort: 5000
           env:
             - name: DATABASE_URL
-              value: "mysql+pymysql://username:password@rds-endpoint.amazonaws.com/dbname"
+              value: "mysql+pymysql://admin:qwertyuiop@database-1.ct8686g6i2km.us-west-2.rds.amazonaws.com:3306/healthcare"
 ---
 apiVersion: v1
 kind: Service
@@ -33,4 +33,4 @@ spec:
     - protocol: TCP
       port: 5000
       targetPort: 5000
-      nodePort: 30007
+      nodePort: 30007  # You can specify any available NodePort
