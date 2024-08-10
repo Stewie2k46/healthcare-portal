@@ -2,14 +2,16 @@ from flask import Flask, request, jsonify, url_for, redirect, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
-import urllib.parse
 
 app = Flask(__name__)
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'mysql+pymysql://username:password@mysql:3306/healthcare')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
+    'DATABASE_URL', 
+    'mysql+pymysql://username:password@database-1.ct8686g6i2km.us-west-2.rds.amazonaws.com/healthcare'
+)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key'  # Needed for session management and security
+app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a strong secret key
 
 # Initialize the database
 db = SQLAlchemy(app)
@@ -101,26 +103,6 @@ def get_patient(id):
         'blood_group': patient.blood_group,
         'medical_record': patient.medical_record
     })
-
-@app.route('/doctors/register', methods=['POST'])
-def register_doctor():
-    data = request.get_json()
-    new_doctor = Doctor(
-        username=data['username'],
-        password=data['password']  # Note: For production, store passwords securely using hashing
-    )
-    db.session.add(new_doctor)
-    db.session.commit()
-    return jsonify({"message": "Doctor registered successfully"}), 201
-
-@app.route('/doctors/login', methods=['POST'])
-def login_doctor():
-    data = request.get_json()
-    doctor = Doctor.query.filter_by(username=data['username'], password=data['password']).first()
-    if doctor:
-        return jsonify({"message": "Login successful"}), 200
-    else:
-        return jsonify({"message": "Invalid credentials"}), 401
 
 @app.route('/routes')
 def list_routes():
