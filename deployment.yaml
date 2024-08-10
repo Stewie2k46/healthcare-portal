@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: healthcare-portal
-          image: stewiedocker46/healthcare:latest  # Update with the image built and tagged locally
+          image: stewiedocker46/healthcare:latest  # Update with your Docker image name and tag
           ports:
             - containerPort: 5000
           env:
