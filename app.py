@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, url_for
+from flask import Flask, request, jsonify, url_for, redirect, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import os
@@ -9,6 +9,7 @@ app = Flask(__name__)
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'mysql+pymysql://username:password@mysql:3306/healthcare')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'your_secret_key'  # Needed for session management and security
 
 # Initialize the database
 db = SQLAlchemy(app)
@@ -33,7 +34,44 @@ class Doctor(db.Model):
 # Routes
 @app.route('/')
 def index():
-    return "Welcome to the Healthcare Portal"
+    return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Check if the username already exists
+        existing_user = Doctor.query.filter_by(username=username).first()
+        if existing_user:
+            return "Username already exists. Please choose another one.", 400
+
+        # Create a new doctor
+        new_doctor = Doctor(username=username, password=password)
+        db.session.add(new_doctor)
+        db.session.commit()
+
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Authenticate the doctor
+        doctor = Doctor.query.filter_by(username=username, password=password).first()
+        if doctor:
+            return redirect(url_for('dashboard'))
+        else:
+            return "Invalid credentials. Please try again.", 401
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    return "Welcome to the Doctor's Dashboard!"
 
 @app.route('/patients', methods=['POST'])
 def create_patient():
